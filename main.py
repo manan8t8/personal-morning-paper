@@ -5,7 +5,7 @@ from datetime import date
 from pathlib import Path
 
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import db
@@ -21,6 +21,8 @@ TOPICS = [
     "pakistan", "entertainment", "education", "finance", "climate",
 ]
 
+FEEDBACK_DELTA = {"like": 0.3, "skip": -0.3, "click": 0.1}
+
 
 def current_user(request: Request):
     uid = request.cookies.get("uid")
@@ -35,6 +37,7 @@ def show(request: Request, user, row):
         "ed": json.loads(row["data"]),
         "edition_id": row["id"],
         "edition_date": row["edition_date"],
+        "weights": db.get_weights(user["id"]),
     })
 
 
@@ -89,6 +92,24 @@ def generate(request: Request):
     data = edition.build_edition(user)
     db.save_edition(user["id"], str(date.today()), data)
     return RedirectResponse("/paper", status_code=303)
+
+
+@app.post("/feedback")
+def feedback(
+    request: Request,
+    link: str = Form(...),
+    topic: str = Form(...),
+    action: str = Form(...),
+):
+    user = current_user(request)
+    if not user:
+        return JSONResponse({"ok": False}, status_code=401)
+    delta = FEEDBACK_DELTA.get(action)
+    if delta is None:
+        return JSONResponse({"ok": False}, status_code=400)
+    db.record_event(user["id"], link, topic, action)
+    db.adjust_weight(user["id"], topic, delta)
+    return {"ok": True, "weights": db.get_weights(user["id"])}
 
 
 @app.get("/edition/{eid}")

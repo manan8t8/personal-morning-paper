@@ -83,7 +83,6 @@ def save_edition(uid, edition_date, data):
         )
         return cur.lastrowid
 
-
 def get_edition_for_date(uid, edition_date):
     with get_conn() as c:
         return c.execute(
@@ -106,3 +105,35 @@ def list_editions(uid):
             "ORDER BY edition_date DESC",
             (uid,),
         ).fetchall()
+        
+def record_event(uid, link, topic, action):
+
+    with get_conn() as c:
+        c.execute(
+            "INSERT INTO events (user_id, link, topic, action) VALUES (?, ?, ?, ?)",
+            (uid, link, topic, action),
+        )
+
+
+def adjust_weight(uid, topic, delta):
+    with get_conn() as c:
+        row = c.execute(
+            "SELECT weight FROM user_topics WHERE user_id = ? AND topic = ?",
+            (uid, topic),
+        ).fetchone()
+        if row:
+            new = min(3.0, max(0.05, row["weight"] + delta))
+        else:
+            new = max(0.1, 0.5 + delta)  # a brand-new interest starts mid-way
+        c.execute(
+            "INSERT OR REPLACE INTO user_topics VALUES (?, ?, ?)", (uid, topic, new)
+        )
+    return round(new, 2)
+
+
+def get_skipped_links(uid):
+    with get_conn() as c:
+        rows = c.execute(
+            "SELECT link FROM events WHERE user_id = ? AND action = 'skip'", (uid,)
+        ).fetchall()
+    return {r["link"] for r in rows}

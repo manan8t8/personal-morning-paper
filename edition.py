@@ -24,17 +24,20 @@ def gather(topic, limit):
 
 def build_edition(user):
     weights = db.get_weights(user["id"])
+    skipped = db.get_skipped_links(user["id"])
     size = SIZE.get(user["minutes"], 12)
     top_topics = sorted(weights, key=weights.get, reverse=True)[:5]
 
     candidates = []
     for t in top_topics:
         candidates += gather(t, 6)
+    candidates = [a for a in candidates if a["link"] not in skipped]
 
     explore = []
     pool = [t for t in GENERAL if t not in weights]
     if pool:
         explore = gather(random.choice(pool), 4)
+        explore = [a for a in explore if a["link"] not in skipped]
         explore = sorted(explore, key=lambda a: a["importance"], reverse=True)[:2]
         for a in explore:
             a["why"] = "Something outside your usual interests"
