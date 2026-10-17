@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Paper</title></head>
+<body style="font-family: Georgia, serif; max-width: 720px; margin: 40px auto;">
+  <h1>The {{ user["name"] }} Daily</h1>
+  <p>Reading time: {{ user["minutes"] }} minutes</p>
+  <h3>Your interests</h3>
+  <ul>
+    {% for topic, w in weights.items() %}
+    <li>{{ topic }}: {{ w }}</li>
+    {% endfor %}
+  </ul>
+  <p><a href="/logout">Start over</a></p>
+</body>
+</html>
