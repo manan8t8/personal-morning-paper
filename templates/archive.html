@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Archive</title></head>
+<body style="font-family: Georgia, serif; max-width: 600px; margin: 40px auto;">
+  <h1>Your past papers</h1>
+  <ul>
+    {% for e in editions %}
+    <li><a href="/edition/{{ e["id"] }}">{{ e["edition_date"] }}</a></li>
+    {% else %}
+    <li>No editions yet.</li>
+    {% endfor %}
+  </ul>
+  <p><a href="/paper">Back to today's paper</a></p>
+</body>
+</html>

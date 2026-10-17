@@ -1,3 +1,4 @@
+import json
 import sqlite3
 
 DB_PATH = "paper.db"
@@ -68,3 +69,40 @@ def get_weights(uid):
             "SELECT topic, weight FROM user_topics WHERE user_id = ?", (uid,)
         ).fetchall()
     return {r["topic"]: r["weight"] for r in rows}
+
+
+def save_edition(uid, edition_date, data):
+    with get_conn() as c:
+        c.execute(
+            "DELETE FROM editions WHERE user_id = ? AND edition_date = ?",
+            (uid, edition_date),
+        )
+        cur = c.execute(
+            "INSERT INTO editions (user_id, edition_date, data) VALUES (?, ?, ?)",
+            (uid, edition_date, json.dumps(data)),
+        )
+        return cur.lastrowid
+
+
+def get_edition_for_date(uid, edition_date):
+    with get_conn() as c:
+        return c.execute(
+            "SELECT * FROM editions WHERE user_id = ? AND edition_date = ?",
+            (uid, edition_date),
+        ).fetchone()
+
+
+def get_edition_by_id(uid, eid):
+    with get_conn() as c:
+        return c.execute(
+            "SELECT * FROM editions WHERE user_id = ? AND id = ?", (uid, eid)
+        ).fetchone()
+
+
+def list_editions(uid):
+    with get_conn() as c:
+        return c.execute(
+            "SELECT id, edition_date FROM editions WHERE user_id = ? "
+            "ORDER BY edition_date DESC",
+            (uid,),
+        ).fetchall()
