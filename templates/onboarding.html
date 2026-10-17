@@ -1,55 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Your Morning Paper</title>
-  <style>
-    body { font-family: Georgia, serif; background: #faf7f0; color: #111; margin: 0; }
-    .wrap { max-width: 720px; margin: 0 auto; padding: 40px 20px; }
-    h1 { text-align: center; font-size: 2.6rem; border-bottom: 4px double #111;
-         padding-bottom: 10px; margin-bottom: 4px; }
-    .tag { text-align: center; font-style: italic; margin-bottom: 30px; }
-    h3 { margin: 28px 0 10px; }
-    input[type=text] { width: 100%; padding: 10px; font-size: 1rem;
-         border: 1px solid #111; background: #fff; box-sizing: border-box; }
-    .chips { display: flex; flex-wrap: wrap; gap: 10px; }
-    .chips input { display: none; }
-    .chips span { display: inline-block; padding: 8px 16px; border: 1px solid #111;
-         border-radius: 999px; cursor: pointer; user-select: none; }
-    .chips input:checked + span { background: #111; color: #faf7f0; }
-    select { padding: 10px; font-size: 1rem; }
-    button { margin-top: 30px; width: 100%; padding: 14px; font-size: 1.1rem;
-         background: #111; color: #faf7f0; border: 0; cursor: pointer; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Build your morning paper</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1d1b4b; --soft:#55537a; --bg:#f1f0ff; --sun:#ffc933; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:'Newsreader', Georgia, serif; font-size:19px; line-height:1.5; }
+  h1, h2, .btn, .chip span { font-family:'Bricolage Grotesque', 'Segoe UI', sans-serif; }
+  :focus-visible { outline:3px solid var(--ink); outline-offset:3px; }
+  .wrap { position:relative; max-width:760px; margin:0 auto; padding:64px 24px 90px; overflow:hidden; }
+  .sun { position:absolute; right:-30px; top:-60px; width:200px; height:200px; border-radius:50%;
+         background:var(--sun); border:3px solid var(--ink); animation:rise 1.1s ease-out both; }
+  @keyframes rise { from { transform:translateY(80px); } to { transform:none; } }
+  h1 { position:relative; font-size:clamp(40px, 8vw, 80px); font-weight:800; line-height:1.02;
+       letter-spacing:-0.02em; margin:0 0 14px; max-width:10ch; }
+  .lede { position:relative; color:var(--soft); max-width:46ch; margin:0 0 40px; }
+  .q { font-size:26px; font-weight:800; margin:40px 0 6px; }
+  .hint { color:var(--soft); font-size:16px; margin:0 0 14px; }
+  input[type=text] { width:100%; font:inherit; font-size:20px; padding:12px 16px; background:#fff;
+         color:var(--ink); border:2px solid var(--ink); border-radius:14px; }
+  .chips { display:flex; flex-wrap:wrap; gap:10px; }
+  .chip { position:relative; }
+  .chip input { position:absolute; opacity:0; inset:0; cursor:pointer; }
+  .chip span { display:inline-block; padding:8px 18px; background:#fff; border:2px solid var(--ink);
+               border-radius:999px; font-size:16px; font-weight:500; }
+  .chip input:checked + span { background:var(--c, var(--sun)); box-shadow:3px 3px 0 var(--ink); }
+  .chip input:focus-visible + span { outline:3px solid var(--ink); outline-offset:3px; }
+  .btn { margin-top:48px; width:100%; font-size:22px; font-weight:800; padding:16px; cursor:pointer;
+         color:var(--ink); background:var(--sun); border:3px solid var(--ink); border-radius:999px;
+         box-shadow:5px 5px 0 var(--ink); }
+  .btn:hover { transform:translate(2px,2px); box-shadow:3px 3px 0 var(--ink); }
+  @media (prefers-reduced-motion: reduce) { .sun { animation:none; } }
+</style>
 </head>
 <body>
 <div class="wrap">
-  <h1>The Morning Paper</h1>
-  <div class="tag">A newspaper that is only about you</div>
+  <div class="sun" aria-hidden="true"></div>
+  <h1>Build your morning paper</h1>
+  <p class="lede">Tell us what you care about. Every story you like or skip makes tomorrow's paper more yours.</p>
+
   <form method="post" action="/onboarding">
-    <h3>What should we call you?</h3>
+    <h2 class="q">What should we call you?</h2>
     <input type="text" name="name" placeholder="Your name" required>
 
-    <h3>Pick what you care about</h3>
+    <h2 class="q">Pick what you care about</h2>
+    <p class="hint">Choose as many as you like.</p>
     <div class="chips">
       {% for t in topics %}
-      <label><input type="checkbox" name="topics" value="{{ t }}"><span>{{ t }}</span></label>
+      <label class="chip"><input type="checkbox" name="topics" value="{{ t }}"><span data-topic="{{ t }}">{{ t }}</span></label>
       {% endfor %}
     </div>
 
-    <h3>Anything specific? (optional, separate with commas)</h3>
-    <input type="text" name="extra" placeholder="e.g. startups, formula 1, space">
+    <h2 class="q">Anything more specific?</h2>
+    <p class="hint">Optional. Separate ideas with commas.</p>
+    <input type="text" name="extra" placeholder="startups, formula 1, space">
 
-    <h3>How long do you want to read?</h3>
-    <select name="minutes">
-      <option value="5">5 minutes</option>
-      <option value="10" selected>10 minutes</option>
-      <option value="15">15 minutes</option>
-    </select>
+    <h2 class="q">How long do you want to read?</h2>
+    <div class="chips" style="margin-top:14px">
+      <label class="chip"><input type="radio" name="minutes" value="5"><span>5 minutes</span></label>
+      <label class="chip"><input type="radio" name="minutes" value="10" checked><span>10 minutes</span></label>
+      <label class="chip"><input type="radio" name="minutes" value="15"><span>15 minutes</span></label>
+    </div>
 
-    <button type="submit">Build my first paper</button>
+    <button class="btn" type="submit">Build my paper</button>
   </form>
 </div>
+<script>
+  const PALETTE = ["#ffc933", "#ff7a59", "#4fd1a5", "#5aa9ff", "#b39bff", "#ff8fb1"];
+  function colorFor(topic) {
+    let s = 0;
+    for (const ch of topic) s += ch.charCodeAt(0);
+    return PALETTE[s % PALETTE.length];
+  }
+  document.querySelectorAll("[data-topic]").forEach((el) =>
+    el.parentElement.style.setProperty("--c", colorFor(el.dataset.topic))
+  );
+</script>
 </body>
 </html>

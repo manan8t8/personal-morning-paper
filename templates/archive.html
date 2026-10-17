@@ -1,15 +1,41 @@
 <!DOCTYPE html>
 <html lang="en">
-<head><meta charset="utf-8"><title>Archive</title></head>
-<body style="font-family: Georgia, serif; max-width: 600px; margin: 40px auto;">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Past papers</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600&display=swap" rel="stylesheet">
+<style>
+  :root { --ink:#1d1b4b; --soft:#55537a; --bg:#f1f0ff; --sun:#ffc933; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font-family:'Newsreader', Georgia, serif; font-size:19px; line-height:1.5; }
+  h1, .row b, .btn { font-family:'Bricolage Grotesque', 'Segoe UI', sans-serif; }
+  :focus-visible { outline:3px solid var(--ink); outline-offset:3px; }
+  .wrap { max-width:680px; margin:0 auto; padding:64px 24px 80px; }
+  h1 { font-size:clamp(38px, 7vw, 64px); font-weight:800; line-height:1.05; letter-spacing:-0.02em; margin:0 0 10px; }
+  .lede { color:var(--soft); margin:0 0 32px; }
+  .row { display:flex; justify-content:space-between; align-items:center; text-decoration:none;
+         background:#fff; border:2px solid var(--ink); border-radius:14px; padding:16px 20px; margin-bottom:12px; }
+  .row:hover { box-shadow:5px 5px 0 var(--ink); transform:translate(-2px,-2px); background:var(--sun); }
+  .row b { font-size:22px; font-weight:800; }
+  .btn { display:inline-block; margin-top:20px; text-decoration:none; font-weight:500; font-size:16px;
+         padding:10px 18px; border:2px solid var(--ink); border-radius:999px; background:#fff; color:var(--ink); }
+  .btn:hover { background:var(--ink); color:#fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
   <h1>Your past papers</h1>
-  <ul>
-    {% for e in editions %}
-    <li><a href="/edition/{{ e["id"] }}">{{ e["edition_date"] }}</a></li>
-    {% else %}
-    <li>No editions yet.</li>
-    {% endfor %}
-  </ul>
-  <p><a href="/paper">Back to today's paper</a></p>
+  <p class="lede">Every day's edition is saved, so you can read it again.</p>
+  {% for e in editions %}
+  <a class="row" href="/edition/{{ e["id"] }}"><b>{{ e["edition_date"] }}</b><span>Read this paper</span></a>
+  {% else %}
+  <p>No papers yet. Open today's paper to start your archive.</p>
+  {% endfor %}
+  <a class="btn" href="/paper">Back to today's paper</a>
+</div>
 </body>
 </html>
