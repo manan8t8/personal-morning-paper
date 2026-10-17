@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 14mm; }
+  body { font-family: Georgia, "Times New Roman", serif; color: #111;
+         font-size: 10.5pt; line-height: 1.35; }
+  a { color: #111; text-decoration: none; }
+  .mast { text-align: center; border-top: 3px solid #111;
+          border-bottom: 3px double #111; padding: 6px 0; }
+  .mast h1 { font-size: 40pt; margin: 0; letter-spacing: 1px; }
+  .meta { display: flex; justify-content: space-between; font-size: 9pt;
+          border-bottom: 1px solid #111; padding: 4px 0; margin-bottom: 10px; }
+  .lead { border-bottom: 1px solid #111; padding-bottom: 10px; margin-bottom: 8px; }
+  .lead h2 { font-size: 24pt; line-height: 1.1; margin: 4px 0; }
+  .lead p { font-size: 12pt; }
+  .sec { font-weight: bold; text-transform: uppercase; font-size: 9pt;
+         border-bottom: 2px solid #111; margin: 10px 0 8px; }
+  .cols { column-count: 3; column-gap: 16px; column-rule: 1px solid #bbb; }
+  .item { break-inside: avoid; margin-bottom: 10px; }
+  .item h3 { font-size: 12pt; margin: 2px 0; line-height: 1.15; }
+  .kicker { font-size: 7.5pt; text-transform: uppercase; letter-spacing: .8px; color: #666; }
+  .why { font-size: 8pt; font-style: italic; color: #555; }
+</style>
+</head>
+<body>
+  <div class="mast"><h1>The {{ user["name"] }} Daily</h1></div>
+  <div class="meta">
+    <span>{{ edition_date }}</span>
+    <span>Selected for you: {{ interests }}</span>
+    <span>{{ user["minutes"] }}-minute read</span>
+  </div>
+
+  {% if ed.lead %}
+  <div class="lead">
+    <div class="kicker">{{ ed.lead.topic }} · {{ ed.lead.source }}</div>
+    <h2><a href="{{ ed.lead.link }}">{{ ed.lead.title }}</a></h2>
+    <p>{{ ed.lead.summary }}</p>
+    <div class="why">{{ ed.lead.why }}</div>
+  </div>
+  {% endif %}
+
+  <div class="sec">Top stories for you</div>
+  <div class="cols">
+    {% for a in ed.featured %}
+    <div class="item">
+      <div class="kicker">{{ a.topic }} · {{ a.source }}</div>
+      <h3><a href="{{ a.link }}">{{ a.title }}</a></h3>
+      <div>{{ a.summary }}</div>
+      <div class="why">{{ a.why }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="sec">In brief</div>
+  <div class="cols">
+    {% for a in ed.briefs %}
+    <div class="item">
+      <div class="kicker">{{ a.topic }} · {{ a.source }}</div>
+      <h3><a href="{{ a.link }}">{{ a.title }}</a></h3>
+      <div>{{ a.summary }}</div>
+      <div class="why">{{ a.why }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</body>
+</html>

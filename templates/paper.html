@@ -31,7 +31,7 @@
   <div class="mast"><h1>The {{ user["name"] }} Daily</h1></div>
   <div class="bar">
     <span>{{ edition_date }} · {{ user["minutes"] }}-minute read</span>
-    <span><a href="/generate">Regenerate</a><a href="/archive">Archive</a><a href="/logout">Start over</a></span>
+    <span><a href="/edition/{{ edition_id }}/pdf">Download PDF</a><a href="/generate">Regenerate</a><a href="/archive">Archive</a><a href="/logout">Start over</a></span>
   </div>
 
   {% if ed.lead %}

@@ -1,8 +1,15 @@
+import json
+import subprocess
+import sys
+from datetime import date
+from pathlib import Path
+
 from fastapi import FastAPI, Request, Form
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 
 import db
+import edition
 
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -20,6 +27,15 @@ def current_user(request: Request):
     if uid and uid.isdigit():
         return db.get_user(int(uid))
     return None
+
+
+def show(request: Request, user, row):
+    return templates.TemplateResponse(request, "paper.html", {
+        "user": user,
+        "ed": json.loads(row["data"]),
+        "edition_id": row["id"],
+        "edition_date": row["edition_date"],
+    })
 
 
 @app.get("/")
@@ -59,10 +75,75 @@ def paper(request: Request):
     user = current_user(request)
     if not user:
         return RedirectResponse("/onboarding")
+    row = db.get_edition_for_date(user["id"], str(date.today()))
+    if not row:
+        return RedirectResponse("/generate", status_code=303)
+    return show(request, user, row)
+
+
+@app.get("/generate")
+def generate(request: Request):
+    user = current_user(request)
+    if not user:
+        return RedirectResponse("/onboarding")
+    data = edition.build_edition(user)
+    db.save_edition(user["id"], str(date.today()), data)
+    return RedirectResponse("/paper", status_code=303)
+
+
+@app.get("/edition/{eid}")
+def old_edition(request: Request, eid: int):
+    user = current_user(request)
+    if not user:
+        return RedirectResponse("/onboarding")
+    row = db.get_edition_by_id(user["id"], eid)
+    if not row:
+        return RedirectResponse("/archive")
+    return show(request, user, row)
+
+
+@app.get("/edition/{eid}/pdf")
+def edition_pdf(request: Request, eid: int):
+    user = current_user(request)
+    if not user:
+        return RedirectResponse("/onboarding")
+    row = db.get_edition_by_id(user["id"], eid)
+    if not row:
+        return RedirectResponse("/archive")
+
     weights = db.get_weights(user["id"])
-    return templates.TemplateResponse(
-        request, "paper.html", {"user": user, "weights": weights}
+    interests = ", ".join(sorted(weights, key=weights.get, reverse=True)[:4])
+    html = templates.get_template("pdf.html").render({
+        "user": user,
+        "ed": json.loads(row["data"]),
+        "edition_date": row["edition_date"],
+        "interests": interests,
+    })
+
+    out = Path("pdfs")
+    out.mkdir(exist_ok=True)
+    html_path = out / f"edition_{eid}.html"
+    pdf_path = out / f"edition_{eid}.pdf"
+    html_path.write_text(html, encoding="utf-8")
+    subprocess.run(
+        [sys.executable, "make_pdf.py", str(html_path), str(pdf_path)], check=True
     )
+    return FileResponse(
+        pdf_path,
+        media_type="application/pdf",
+        filename=f"morning-paper-{row['edition_date']}.pdf",
+    )
+
+
+@app.get("/archive")
+def archive(request: Request):
+    user = current_user(request)
+    if not user:
+        return RedirectResponse("/onboarding")
+    return templates.TemplateResponse(request, "archive.html", {
+        "user": user,
+        "editions": db.list_editions(user["id"]),
+    })
 
 
 @app.get("/logout")
