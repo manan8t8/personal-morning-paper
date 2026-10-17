@@ -10,8 +10,11 @@
     .mast { text-align: center; border-bottom: 4px double #111; padding-bottom: 8px; }
     .mast h1 { font-size: 3rem; margin: 0; }
     .bar { display: flex; justify-content: space-between; font-size: .9rem;
-           border-bottom: 1px solid #111; padding: 6px 0; margin-bottom: 20px; }
+           border-bottom: 1px solid #111; padding: 6px 0; margin-bottom: 14px; }
     .bar a { color: #111; margin-left: 14px; }
+    .learn { font-size: .85rem; margin-bottom: 18px; }
+    .learn span.pill { display: inline-block; border: 1px solid #111; border-radius: 999px;
+         padding: 2px 10px; margin: 2px 4px 2px 0; }
     .lead h2 { font-size: 2.2rem; margin: 0 0 8px; }
     .lead p { font-size: 1.15rem; }
     .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px;
@@ -23,23 +26,42 @@
     .brief { break-inside: avoid; margin-bottom: 14px; }
     a.t { color: #111; text-decoration: none; } a.t:hover { text-decoration: underline; }
     .src { font-size: .75rem; text-transform: uppercase; color: #777; }
+    .acts { margin-top: 6px; }
+    .acts button { font-family: inherit; font-size: .75rem; background: none;
+         border: 1px solid #111; border-radius: 999px; padding: 3px 10px;
+         margin-right: 6px; cursor: pointer; }
+    .acts button:hover { background: #111; color: #faf7f0; }
+    .acts button:disabled { opacity: .5; cursor: default; }
     @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } .briefs { column-count: 1; } }
   </style>
 </head>
 <body>
+{% macro actions() %}
+  <div class="acts">
+    <button data-action="like">More like this</button>
+    <button data-action="skip">Not interested</button>
+  </div>
+{% endmacro %}
 <div class="wrap">
   <div class="mast"><h1>The {{ user["name"] }} Daily</h1></div>
   <div class="bar">
     <span>{{ edition_date }} · {{ user["minutes"] }}-minute read</span>
-    <span><a href="/edition/{{ edition_id }}/pdf">Download PDF</a><a href="/generate">Regenerate</a><a href="/archive">Archive</a><a href="/logout">Start over</a></span>
+    <span>
+      <a href="/edition/{{ edition_id }}/pdf">Download PDF</a>
+      <a href="/generate">Regenerate</a>
+      <a href="/archive">Archive</a>
+      <a href="/logout">Start over</a>
+    </span>
   </div>
+  <div class="learn"><b>What we have learned about you:</b> <span id="weights"></span></div>
 
   {% if ed.lead %}
-  <div class="lead">
+  <div class="lead" data-link="{{ ed.lead.link }}" data-topic="{{ ed.lead.topic }}">
     <div class="src">{{ ed.lead.topic }} · {{ ed.lead.source }}</div>
     <h2><a class="t" href="{{ ed.lead.link }}" target="_blank">{{ ed.lead.title }}</a></h2>
     <p>{{ ed.lead.summary }}</p>
     <div class="why">{{ ed.lead.why }}</div>
+    {{ actions() }}
   </div>
   {% else %}
   <p>No stories found. Check your internet and click Regenerate.</p>
@@ -47,25 +69,79 @@
 
   <div class="grid">
     {% for a in ed.featured %}
-    <div class="story">
+    <div class="story" data-link="{{ a.link }}" data-topic="{{ a.topic }}">
       <div class="src">{{ a.topic }} · {{ a.source }}</div>
       <h3><a class="t" href="{{ a.link }}" target="_blank">{{ a.title }}</a></h3>
       <p>{{ a.summary }}</p>
       <div class="why">{{ a.why }}</div>
+      {{ actions() }}
     </div>
     {% endfor %}
   </div>
 
   <div class="briefs">
     {% for a in ed.briefs %}
-    <div class="brief">
+    <div class="brief" data-link="{{ a.link }}" data-topic="{{ a.topic }}">
       <div class="src">{{ a.topic }} · {{ a.source }}</div>
       <a class="t" href="{{ a.link }}" target="_blank"><b>{{ a.title }}</b></a>
       <div>{{ a.summary }}</div>
       <div class="why">{{ a.why }}</div>
+      {{ actions() }}
     </div>
     {% endfor %}
   </div>
 </div>
+
+<script>
+  function renderWeights(w) {
+    const box = document.getElementById("weights");
+    box.innerHTML = "";
+    Object.entries(w)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 6)
+      .forEach(([topic, weight]) => {
+        const s = document.createElement("span");
+        s.className = "pill";
+        s.textContent = topic + " " + Number(weight).toFixed(1);
+        box.appendChild(s);
+      });
+  }
+  renderWeights({{ weights|tojson }});
+
+  function formFor(action, card) {
+    const fd = new FormData();
+    fd.append("action", action);
+    fd.append("link", card.dataset.link);
+    fd.append("topic", card.dataset.topic);
+    return fd;
+  }
+
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-action]");
+    if (!btn) return;
+    const card = btn.closest("[data-link]");
+    const res = await fetch("/feedback", {
+      method: "POST",
+      body: formFor(btn.dataset.action, card),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderWeights(data.weights);
+    if (btn.dataset.action === "skip") {
+      card.style.display = "none";
+    } else {
+      btn.textContent = "Noted";
+      btn.disabled = true;
+    }
+  });
+
+  // opening an article counts as a small positive signal
+  document.querySelectorAll("a.t").forEach((a) => {
+    a.addEventListener("click", () => {
+      const card = a.closest("[data-link]");
+      navigator.sendBeacon("/feedback", formFor("click", card));
+    });
+  });
+</script>
 </body>
 </html>
