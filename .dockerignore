@@ -1,0 +1,6 @@
+venv/
+__pycache__/
+.git/
+paper.db
+pdfs/
+.env
